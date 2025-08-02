@@ -3,9 +3,54 @@
 #include <fstream>
 #include <termios.h>
 #include <unistd.h>
+#include <vector>
+#include <ctime>
+#include <sstream>
 #include "picosha2.h"
 
 using namespace std;
+
+struct VaultEntry {
+    string service;
+    string username;
+    string password;
+    string createdAt;
+};
+
+string getHiddenPassword();
+string hashPassword(const string& password);
+string getCurrentDate();
+bool fileExists(const string& filename);
+void setupPassword(const string& filename);
+bool login(const string& filename);
+void createVault(vector<VaultEntry>& vaults);
+
+string getCurrentDate() {
+    time_t now = time(0);
+    tm* ltm = localtime(&now);
+
+    ostringstream oss;
+    oss << put_time(ltm, "%Y-%m-%d");
+    return oss.str();
+}
+
+void createVault(vector<VaultEntry>& vaults) {
+    string vaultService, vaultUsername, vaultPassword, hashedPas;
+    cout << "Enter Service: ";
+    getline(cin, vaultService);
+    cout << "Enter Username: ";
+    getline(cin, vaultUsername);
+    cout << "Enter Password: ";
+    vaultPassword = getHiddenPassword();
+    hashedPas = hashPassword(vaultPassword);
+
+    VaultEntry newVault;
+    newVault.service = vaultService;
+    newVault.username = vaultUsername;
+    newVault.password = hashedPas;
+    newVault.createdAt = getCurrentDate();
+    cout  << vaultService << " | " << vaultUsername << " | " << hashedPas << " | " << newVault.createdAt << endl;
+}
 
 string getHiddenPassword() {
     string password;
@@ -51,7 +96,7 @@ void setupPassword(const string& filename) {
     cout << "\033[36m🔐 First-time setup: Create a master password\033[0m\n";
     cout << "Enter new password: ";
     password1 = getHiddenPassword();
-    cout << "Confirm password :";
+    cout << "Confirm password: ";
     password2 = getHiddenPassword();
     if (password1 != password2 || password1.empty()) {
         cout << "\033[31m❌ Passwords do not match or are empty. Try again.\033[0m\n";
@@ -99,9 +144,11 @@ bool login(const string& filename) {
 }
 
 int main() {
+    vector<VaultEntry> vaults;
     const string passwordFile = "vault.pass";
 
     if (!login(passwordFile)) {
         return 1;
     }
+    createVault(vaults);
 }
