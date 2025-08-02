@@ -7,7 +7,34 @@
 
 using namespace std;
 
+string getHiddenPassword() {
+    string password;
+    char ch;
 
+    termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+
+    newt.c_lflag &= ~(ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+    while ((ch = getchar()) != '\n' && ch != EOF) {
+        if (ch == 127 || ch == 8) { // Backspace
+            if (!password.empty()) {
+                password.pop_back();
+                cout << "\b \b";
+            }
+        } else {
+            password.push_back(ch);
+            cout << '*';
+        }
+    }
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    cout << endl;
+
+    return password;
+}
 
 string hashPassword(const string& password) { 
     return picosha2::hash256_hex_string(password);
@@ -23,9 +50,9 @@ void setupPassword(const string& filename) {
 
     cout << "\033[36m🔐 First-time setup: Create a master password\033[0m\n";
     cout << "Enter new password: ";
-    getline(cin, password1);
+    password1 = getHiddenPassword();
     cout << "Confirm password :";
-    getline(cin, password2);
+    password2 = getHiddenPassword();
     if (password1 != password2 || password1.empty()) {
         cout << "\033[31m❌ Passwords do not match or are empty. Try again.\033[0m\n";
         exit(1);
@@ -57,7 +84,7 @@ bool login(const string& filename) {
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
         cout << "\033[33mEnter master password (" << attempt << "/" << maxAttempts << "): \033[0m";
-        getline(cin, input);
+        input = getHiddenPassword();
         
         if (hashPassword(input) == storedHash) {
             cout << "\033[32m✅ Access granted.\033[0m\n";
