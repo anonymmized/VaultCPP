@@ -25,6 +25,17 @@ void setupPassword(const string& filename);
 bool login(const string& filename);
 void createVault(vector<VaultEntry>& vaults);
 
+void viewVaults(const vector<VaultEntry>& vaults) {
+    if (vaults.empty()) {
+        cout << "No vaults are available" << endl;
+        return;
+    }
+
+    for (size_t i = 0; i < vaults.size(); i++) {
+        cout << i + 1 << ". " << vaults[i].service << " | " << vaults[i].username << " | " << vaults[i].password << endl;
+    }
+}
+
 string getCurrentDate() {
     time_t now = time(0);
     tm* ltm = localtime(&now);
@@ -150,5 +161,30 @@ int main() {
     if (!login(passwordFile)) {
         return 1;
     }
-    createVault(vaults);
+
+    while (true) { 
+        cout << "1. Add new vault" << endl;
+        cout << "2. View all vaults" << endl;
+        cout << "3. Exit" << endl;
+        cout << "Enter your choice (1-3) ";
+        int choice;
+        if (!(cin >> choice)) {
+            cout << "Invalid input" << endl;
+            cin.clear();
+            cin.ignore(10000, '\n');
+            continue;
+        }
+        cin.ignore(10000, '\n');
+
+        if (choice == 1){
+            createVault(vaults);
+        } else if (choice == 2) {
+            viewVaults(vaults);
+        } else if (choice == 3) {
+            cout << "Thansk for using programm." << endl;
+            break;
+        } else {
+            cout << "Invalid choice! Select 1-4" << endl;
+        }
+    }
 }
